@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 30a7f3598f38c8548ace4b65ae8d3f20
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316189
+  packageName: Sprite Renderer Palette Swap Shader (URP)
+  packageVersion: 1.0
+  assetPath: Assets/Void Forged Games/PaletteSwapShaders/Materials/Green.mat
+  uploadId: 751562

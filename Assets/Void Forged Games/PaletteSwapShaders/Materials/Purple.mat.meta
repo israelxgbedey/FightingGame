@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 024b10a43d5439348a80e681a189112d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316189
+  packageName: Sprite Renderer Palette Swap Shader (URP)
+  packageVersion: 1.0
+  assetPath: Assets/Void Forged Games/PaletteSwapShaders/Materials/Purple.mat
+  uploadId: 751562

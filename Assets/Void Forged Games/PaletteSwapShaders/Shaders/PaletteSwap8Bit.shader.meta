@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 70d7b63ddefcdec40b05d774e0ace68e
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316189
+  packageName: Sprite Renderer Palette Swap Shader (URP)
+  packageVersion: 1.0
+  assetPath: Assets/Void Forged Games/PaletteSwapShaders/Shaders/PaletteSwap8Bit.shader
+  uploadId: 751562

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4290a929fc80e3f49a0715432372d1bd
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316189
+  packageName: Sprite Renderer Palette Swap Shader (URP)
+  packageVersion: 1.0
+  assetPath: Assets/Void Forged Games/PaletteSwapShaders/Scenes/ExampleScene.unity
+  uploadId: 751562
