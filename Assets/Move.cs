@@ -6,6 +6,16 @@ using TMPro;
 public class Move : MonoBehaviour
 {
 
+
+[Header("Counter System")]
+public KeyCode counterKey = KeyCode.C;
+public float counterDuration = 0.6f;
+private bool isCountering = false;
+private float counterTimer = 0f;
+private bool counterSuccess = false; // Track if counter was successfully used
+private float counterCooldownTimer = 0f;
+private float counterCooldown = 1f; // Cooldown before counter can be used again
+
     [Header("Player Controls")]
 public KeyCode leftKey = KeyCode.LeftArrow;
 public KeyCode rightKey = KeyCode.RightArrow;
@@ -29,7 +39,6 @@ public KeyCode attackKey = KeyCode.Z;
     public Sprite[] idleSprites;
     public Sprite[] runSprites;
     public Sprite[] jumpSprites;
-    public Sprite[] attackSprites;
     public Sprite[] damageSprites;
 
     [Tooltip("Frames per second for sprite animations (idle/run/attack/damage)")]
@@ -51,13 +60,51 @@ public KeyCode attackKey = KeyCode.Z;
     [Tooltip("Background size for the health text")]
     public Vector2 healthBackgroundSize = new Vector2(60, 20);
     
-    [Header("Attack System")]
-    public GameObject attackObject;
-    public float attackDuration = 0.3f;
-    public float attackDistance = 1f;
-    public int attackDamage = 10;
-    public Vector2 attackSize = new Vector2(1f, 1f);
-    
+[Header("Attack System - Primary")]
+public GameObject attackObject;
+public float attackDuration = 0.3f;
+public float attackDistance = 1f;
+public int attackDamage = 10;
+public Vector2 attackSize = new Vector2(1f, 1f);
+public Sprite[] attackSprites; // Already exists
+
+
+[Header("Attack System - Secondary")]
+public KeyCode secondaryAttackKey = KeyCode.X; // For Player 1
+// For Player 2, you might want to use a different key like KeyCode.N
+public GameObject secondaryAttackObject;
+public float secondaryAttackDuration = 0.5f;
+public float secondaryAttackDistance = 1.5f;
+public int secondaryAttackDamage = 20;
+public Vector2 secondaryAttackSize = new Vector2(1.5f, 1.5f);
+public Sprite[] secondaryAttackSprites;
+public float secondaryAttackFrameRate = 12f; // Optional different frame rate for secondary attack
+
+[Header("Combo System")]
+public float comboResetTime = 0.8f; // Time allowed between combo presses
+private int comboStep = 0;
+private float comboTimer = 0f;
+private bool comboQueued = false;
+
+
+
+[Header("Floating Combo Text")]
+public GameObject comboTextPrefab;
+public Vector3 comboTextOffset = new Vector3(0, 2f, 0);
+public float comboTextDuration = 1.5f;
+
+private GameObject activeComboText;
+
+
+[Header("Combo UI")]
+public TMP_Text comboText;
+public CanvasGroup comboCanvasGroup;
+public float comboFadeSpeed = 5f;
+
+// Track which attack we're using
+bool isUsingSecondaryAttack = false;
+
+
     Rigidbody2D rb;
     bool facingRight = true;
     bool grounded;
@@ -129,7 +176,7 @@ public KeyCode attackKey = KeyCode.Z;
     }
 
 
-    void DetectPlayerControls()
+void DetectPlayerControls()
 {
     GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
     System.Array.Sort(players, (a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
@@ -143,7 +190,9 @@ public KeyCode attackKey = KeyCode.Z;
             rightKey = KeyCode.RightArrow;
             jumpKey = KeyCode.UpArrow;
             attackKey = KeyCode.Z;
-            Debug.Log("Player 1 controls set: Arrow keys + Z");
+            secondaryAttackKey = KeyCode.X; // Secondary attack for Player 1
+            counterKey = KeyCode.C;
+            Debug.Log("Player 1 controls set: Arrow keys + Z (primary) + X (secondary)");
         }
     }
 
@@ -156,7 +205,9 @@ public KeyCode attackKey = KeyCode.Z;
             rightKey = KeyCode.K;
             jumpKey = KeyCode.U;
             attackKey = KeyCode.M;
-            Debug.Log("Player 2 controls set: H/K/U + M");
+            counterKey = KeyCode.B;
+            secondaryAttackKey = KeyCode.N; // Secondary attack for Player 2
+            Debug.Log("Player 2 controls set: H/K/U + M (primary) + N (secondary)");
         }
     }
 }
@@ -201,7 +252,13 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
         // If attackObject is a prefab reference, we'll instantiate it when needed
     }
 
+void StartCounter()
+{
+    isCountering = true;
+    counterTimer = counterDuration;
 
+    Debug.Log(gameObject.name + " is countering!");
+}
 
     void LateUpdate()
     {
@@ -243,7 +300,7 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
             healthBarFill.color = Color.red;
     }
 
-    void Update()
+void Update()
 {
     if (isTakingDamage) return;
 
@@ -257,11 +314,52 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
     if (Input.GetKeyDown(jumpKey))
         jumpRequested = true;
 
-    // Attack
-    if (Input.GetKeyDown(attackKey) && !isAttacking)
-        StartAttack();
+    // Primary Attack
+    if (Input.GetKeyDown(attackKey))
+    {
+        if (!isAttacking)
+        {
+            StartComboAttack();
+        }
+        else
+        {
+            // If attacking, queue next combo input
+            comboQueued = true;
+        }
+    }
+
+    // Counter - check cooldown too
+    if (Input.GetKeyDown(counterKey) && !isCountering && !isAttacking && counterCooldownTimer <= 0f)
+    {
+        StartCounter();
+    }
+
+    // Secondary Attack
+    if (Input.GetKeyDown(secondaryAttackKey) && !isAttacking)
+        StartAttack(true); // true = secondary attack
 
     moveInput = h;
+
+    // Handle counter timer and cooldown
+    if (isCountering)
+    {
+        counterTimer -= Time.deltaTime;
+        
+        // Visual feedback while countering (optional)
+        Debug.Log(gameObject.name + " is countering! Time left: " + counterTimer);
+        
+        if (counterTimer <= 0f)
+        {
+            isCountering = false;
+            counterCooldownTimer = counterCooldown; // Start cooldown
+        }
+    }
+    
+    // Handle counter cooldown
+    if (counterCooldownTimer > 0f)
+    {
+        counterCooldownTimer -= Time.deltaTime;
+    }
 
     // Store previous grounded state
     wasGrounded = grounded;
@@ -283,12 +381,31 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
         attackTimer -= Time.deltaTime;
         if (attackTimer <= 0f)
         {
-            isAttacking = false;
-            if (currentAttackInstance != null)
+            if (comboQueued)
             {
-                Destroy(currentAttackInstance);
-                currentAttackInstance = null;
+                comboQueued = false;
+                isAttacking = false;
+                StartComboAttack();
             }
+            else
+            {
+                isAttacking = false;
+                
+                if (currentAttackInstance != null)
+                {
+                    Destroy(currentAttackInstance);
+                    currentAttackInstance = null;
+                }
+            }
+        }
+    }
+
+    if (comboStep > 0)
+    {
+        comboTimer -= Time.deltaTime;
+        if (comboTimer <= 0f)
+        {
+            comboStep = 0;
         }
     }
 
@@ -307,32 +424,122 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
 }
 
 
-    void HandleAnimation()
+IEnumerator FadeOutCombo()
+{
+    while (comboCanvasGroup.alpha > 0f)
     {
-        if (state != lastState)
-        {
-            frameIndex = 0;
-            frameTimer = 0f;
-            lastState = state;
-        }
+        comboCanvasGroup.alpha -= Time.deltaTime * comboFadeSpeed;
+        yield return null;
+    }
 
-        Sprite[] frames = GetFramesForState(state);
-        if (frames != null && frames.Length > 0)
+    comboText.text = "";
+}
+
+
+void HandleAnimation()
+{
+    if (state != lastState)
+    {
+        frameIndex = 0;
+        frameTimer = 0f;
+        lastState = state;
+    }
+
+    Sprite[] frames = GetFramesForState(state);
+    if (frames != null && frames.Length > 0)
+    {
+        float fps = frameRate;
+        
+        // Use appropriate frame rate based on attack type
+        if (state == State.Attack)
         {
-            float fps = frameRate;
-            if (state == State.Jump && jumpFrameRate > 0f) fps = jumpFrameRate;
-            
-            frameTimer += Time.deltaTime;
-            float frameTime = 1f / Mathf.Max(1f, fps);
-            
-            if (frameTimer >= frameTime)
-            {
-                frameTimer -= frameTime;
-                frameIndex = (frameIndex + 1) % frames.Length;
-                spriteRenderer.sprite = frames[frameIndex];
-            }
+            if (isUsingSecondaryAttack && secondaryAttackFrameRate > 0f)
+                fps = secondaryAttackFrameRate;
+            // Otherwise use default frameRate
+        }
+        else if (state == State.Jump && jumpFrameRate > 0f)
+        {
+            fps = jumpFrameRate;
+        }
+        
+        frameTimer += Time.deltaTime;
+        float frameTime = 1f / Mathf.Max(1f, fps);
+        
+        if (frameTimer >= frameTime)
+        {
+            frameTimer -= frameTime;
+            frameIndex = (frameIndex + 1) % frames.Length;
+            spriteRenderer.sprite = frames[frameIndex];
         }
     }
+}
+
+void StartComboAttack()
+{
+    // Don't increment combo if we're in a counter state or just got countered
+    // This check might be redundant now since we reset combo in OnAttackHit
+    
+    comboStep++;
+    comboStep = Mathf.Clamp(comboStep, 1, 3);
+
+    isAttacking = true;
+    isUsingSecondaryAttack = false;
+
+    attackTimer = attackDuration;
+    comboTimer = comboResetTime;
+
+    ActivateAttackObject();
+
+    // 🔥 Show combo UI
+    UpdateComboUI();
+}
+
+void UpdateComboUI()
+{
+    if (comboStep <= 1) return;
+
+    if (activeComboText != null)
+    {
+        StopCoroutine(FadeAndDestroyCombo());
+        Destroy(activeComboText);
+    }
+
+    Vector3 spawnPosition = transform.position + comboTextOffset;
+
+    activeComboText = Instantiate(comboTextPrefab, spawnPosition, Quaternion.identity);
+
+    TMP_Text textComponent = activeComboText.GetComponent<TMP_Text>();
+    textComponent.text = comboStep + " HIT COMBO!";
+
+    StartCoroutine(FadeAndDestroyCombo());
+}
+
+
+IEnumerator FadeAndDestroyCombo()
+{
+    TMP_Text text = activeComboText.GetComponent<TMP_Text>();
+
+    float visibleTime = 3f;
+    float fadeTime = 1f;
+
+    // Stay fully visible
+    yield return new WaitForSeconds(visibleTime);
+
+    float timer = 0f;
+    Color startColor = text.color;
+
+    while (timer < fadeTime)
+    {
+        timer += Time.deltaTime;
+        float alpha = Mathf.Lerp(1f, 0f, timer / fadeTime);
+
+        text.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+        yield return null;
+    }
+
+    Destroy(activeComboText);
+    activeComboText = null;
+}
 
     void FixedUpdate()
     {
@@ -374,15 +581,31 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
         jumpRequested = false;
     }
 
-    void StartAttack()
+ void StartAttack(bool isSecondary)
+{
+    if (!isAttacking && !isTakingDamage)
     {
-        if (!isAttacking && !isTakingDamage)
+        isAttacking = true;
+        isUsingSecondaryAttack = isSecondary;
+        
+        if (isSecondary)
         {
-            isAttacking = true;
+            attackTimer = secondaryAttackDuration;
+            ActivateSecondaryAttackObject();
+        }
+        else
+        {
             attackTimer = attackDuration;
             ActivateAttackObject();
         }
+
+
     }
+
+    
+}
+
+
 
     void ActivateAttackObject()
     {
@@ -437,42 +660,160 @@ attackRb.bodyType = RigidbodyType2D.Kinematic;
         }
     }
 
-    public void OnAttackHit(Collider2D other)
+
+void ActivateSecondaryAttackObject()
+{
+    // Clean up any existing attack instance
+    if (currentAttackInstance != null)
     {
-        if (other.CompareTag("Player") && other.gameObject != this.gameObject)
+        Destroy(currentAttackInstance);
+    }
+
+    Vector3 attackPosition = transform.position + 
+        (facingRight ? Vector3.right : Vector3.left) * secondaryAttackDistance;
+
+    // Check if secondaryAttackObject is a prefab or scene object
+    if (secondaryAttackObject.scene.rootCount == 0) // It's a prefab
+    {
+        // Instantiate the prefab
+        currentAttackInstance = Instantiate(secondaryAttackObject, attackPosition, Quaternion.identity);
+    }
+    else // It's a scene object
+    {
+        // Use the existing scene object
+        currentAttackInstance = secondaryAttackObject;
+        currentAttackInstance.transform.position = attackPosition;
+        currentAttackInstance.SetActive(true);
+    }
+
+    // Set up the attack instance
+    currentAttackInstance.transform.rotation = Quaternion.identity;
+    currentAttackInstance.transform.localScale = Vector3.one;
+
+    // Ensure it has the necessary components
+    AttackTriggerHandler triggerHandler = currentAttackInstance.GetComponent<AttackTriggerHandler>();
+    if (triggerHandler == null)
+    {
+        triggerHandler = currentAttackInstance.AddComponent<AttackTriggerHandler>();
+        triggerHandler.playerMove = this;
+    }
+
+    // Configure collider
+    Collider2D collider = currentAttackInstance.GetComponent<Collider2D>();
+    if (collider == null)
+    {
+        BoxCollider2D boxCollider = currentAttackInstance.AddComponent<BoxCollider2D>();
+        boxCollider.size = secondaryAttackSize;
+        boxCollider.isTrigger = true;
+    }
+    else if (collider is BoxCollider2D boxCollider2D)
+    {
+        boxCollider2D.size = secondaryAttackSize;
+    }
+
+    // Ensure Rigidbody is kinematic
+    Rigidbody2D attackRb = currentAttackInstance.GetComponent<Rigidbody2D>();
+    if (attackRb == null)
+    {
+        attackRb = currentAttackInstance.AddComponent<Rigidbody2D>();
+        attackRb.isKinematic = true;
+    }
+}
+
+
+
+
+
+public void OnAttackHit(Collider2D other)
+{
+    if (other.CompareTag("Player") && other.gameObject != this.gameObject)
+    {
+        Move otherPlayer = other.GetComponent<Move>();
+        if (otherPlayer != null && !otherPlayer.isTakingDamage)
         {
-            Move otherPlayer = other.GetComponent<Move>();
-            if (otherPlayer != null && !otherPlayer.isTakingDamage)
+            // Check if the other player is countering
+            if (otherPlayer.isCountering)
             {
-                Vector2 knockbackDirection = (other.transform.position - transform.position).normalized;
-                Vector2 knockback = knockbackDirection * 5f;
-                otherPlayer.TakeDamage(attackDamage, knockback);
+                Debug.Log(gameObject.name + "'s attack was COUNTERED! Combo reset.");
+                
+                // Reset combo for the attacker
+                comboStep = 0;
+                comboTimer = 0f;
+                comboQueued = false;
+                
+                // Optional: Hide combo UI if it's showing
+                if (activeComboText != null)
+                {
+                    Destroy(activeComboText);
+                    activeComboText = null;
+                }
+                
+                return; // Don't proceed with damage or combo
             }
+            
+            Vector2 knockbackDirection = (other.transform.position - transform.position).normalized;
+            Vector2 knockback = knockbackDirection * 5f;
+            
+            // Use appropriate damage based on attack type
+            int damageToApply = isUsingSecondaryAttack ? secondaryAttackDamage : attackDamage + (comboStep * 5);
+            otherPlayer.TakeDamage(damageToApply, knockback);
+            
+            // Combo is only incremented if the attack wasn't countered
+            // The combo increment happens in StartComboAttack already, so we don't need to do anything here
         }
     }
+}
 
-    Sprite[] GetFramesForState(State s)
+Sprite[] GetFramesForState(State s)
+{
+    switch (s)
     {
-        switch (s)
-        {
-            case State.Run: return (runSprites != null && runSprites.Length > 0) ? runSprites : idleSprites;
-            case State.Jump: return (jumpSprites != null && jumpSprites.Length > 0) ? jumpSprites : idleSprites;
-            case State.Hit: return (damageSprites != null && damageSprites.Length > 0) ? damageSprites : idleSprites;
-            case State.Attack: return (attackSprites != null && attackSprites.Length > 0) ? attackSprites : idleSprites;
-            default: return (idleSprites != null && idleSprites.Length > 0) ? idleSprites : null;
-        }
+        case State.Run: return (runSprites != null && runSprites.Length > 0) ? runSprites : idleSprites;
+        case State.Jump: return (jumpSprites != null && jumpSprites.Length > 0) ? jumpSprites : idleSprites;
+        case State.Hit: return (damageSprites != null && damageSprites.Length > 0) ? damageSprites : idleSprites;
+        case State.Attack: 
+            if (isUsingSecondaryAttack && secondaryAttackSprites != null && secondaryAttackSprites.Length > 0)
+                return secondaryAttackSprites;
+            else if (attackSprites != null && attackSprites.Length > 0)
+                return attackSprites;
+            else
+                return idleSprites;
+        default: return (idleSprites != null && idleSprites.Length > 0) ? idleSprites : null;
     }
+}
 
-    public void TakeDamage(int damage, Vector2? knockback = null)
+public void TakeDamage(int damage, Vector2? knockback = null)
+{
+    // CRITICAL FIX: Check if countering and still within counter window
+    if (isCountering)
     {
-        currentHealth = Mathf.Max(0, currentHealth - damage);
-        UpdateHealthBar();
+        Debug.Log(gameObject.name + " SUCCESSFULLY COUNTERED the attack!");
         
-        if (!isTakingDamage)
-        {
-            StartCoroutine(HandleDamage(knockback));
-        }
+        // Optional: Add counter visual feedback
+        // You could play a special animation or particle effect here
+        
+        // Optional: Give the countering player an advantage (like a free attack)
+        // For example, auto-counter attack or stun the attacker
+        
+        return; // 🚫 No damage taken, attack successfully countered
     }
+
+    // Check if on counter cooldown (optional - you might still want to take damage normally)
+    
+    currentHealth = Mathf.Max(0, currentHealth - damage);
+    UpdateHealthBar();
+    
+    if (!isTakingDamage && currentHealth > 0)
+    {
+        StartCoroutine(HandleDamage(knockback));
+    }
+    else if (currentHealth <= 0)
+    {
+        // Handle death here
+        Debug.Log(gameObject.name + " has been defeated!");
+        // You might want to add death animation/logic
+    }
+}
 
     IEnumerator HandleDamage(Vector2? knockback)
     {

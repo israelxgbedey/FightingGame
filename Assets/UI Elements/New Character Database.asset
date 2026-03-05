@@ -14,19 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   character:
   - characterName: 
-    characterSprite: {fileID: 21300000, guid: 444a16def30904444a81360ce7572b8c, type: 3}
+    characterSprite: {fileID: -3748730762174565434, guid: 2eca5d7b8730e4f82a6f59c97fb244ae, type: 3}
   - characterName: 
-    characterSprite: {fileID: 21300000, guid: fdb550509659347d4b4c37d05c566ad2, type: 3}
+    characterSprite: {fileID: -2170365443273223004, guid: 35211f46315e34a68a16c691d734603f, type: 3}
   - characterName: 
     characterSprite: {fileID: -2127767846961483154, guid: e13d0b2675d987f4b9903e17d6e0bc1b, type: 3}
   - characterName: 
     characterSprite: {fileID: 462434960, guid: 90c7332c857b6b043bad30766e14a946, type: 3}
   - characterName: 
     characterSprite: {fileID: 4723107735738678597, guid: 0bd97e23f8b532a4f8969605a3b00a4e, type: 3}
-  characterScales: []
+  characterScales:
+  - {x: 1, y: 1}
   characterPrefabs:
-  - {fileID: 4418542024176416301, guid: 5caf76c306b62475da1fec0d69033998, type: 3}
-  - {fileID: 5284519257966397301, guid: 9008d15f34e314bacb08473de9a881cd, type: 3}
+  - {fileID: 4898526289981372742, guid: b53893a45939140d4927927fea6c7376, type: 3}
+  - {fileID: 4389314180807274245, guid: 75fb5a5cdb81445bbb6720ea776db059, type: 3}
   - {fileID: 6920788761162767317, guid: c8e74159ddedd422f85ed776b5111081, type: 3}
   - {fileID: 4980598663396423199, guid: 7c619c2f3a0534ef79d446b74b033b22, type: 3}
   - {fileID: 3237388147576188515, guid: 406b7831db5564080a06aa10597f1ec4, type: 3}

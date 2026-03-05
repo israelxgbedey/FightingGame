@@ -9,6 +9,8 @@ public class PausedMenu : MonoBehaviour
     public static bool isPaused = false;
     public GameObject pauseMenuPrefab;
     private GameObject pauseMenuInstance;
+    public GameObject quitConfirmPanel; // Add this reference in inspector
+
 
     void Update()
     {
@@ -83,10 +85,46 @@ public class PausedMenu : MonoBehaviour
         SceneManager.LoadScene("MainMenu"); // Replace with your menu scene name
     }
 
-    public void QuitGame()
-    {
-        Time.timeScale = 1f;
+ public void QuitGame()
+{
+    // Resume time before quitting
+    Time.timeScale = 1f;
+    
+    #if UNITY_EDITOR
+        // If we're in the Unity Editor, stop playing
+        UnityEditor.EditorApplication.isPlaying = false;
+    #elif UNITY_WEBGL
+        // WebGL doesn't support Application.Quit()
+        Debug.Log("Game Quit - But WebGL doesn't support quitting");
+        // You might want to redirect or show a message for WebGL
+    #else
+        // For standalone builds (Windows, Mac, Linux)
         Application.Quit();
-        Debug.Log("Game Quit"); // For testing in editor
+    #endif
+    
+    Debug.Log("Game Quit");
+}
+
+
+public void QuitConfirmed()
+{
+    Time.timeScale = 1f;
+    
+    #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+    #else
+        Application.Quit();
+    #endif
+    
+    Debug.Log("Game Quit");
+}
+
+public void CancelQuit()
+{
+    if (quitConfirmPanel != null)
+    {
+        quitConfirmPanel.SetActive(false);
+        pauseMenuInstance.SetActive(true); // Show pause menu again
     }
+}
 }
