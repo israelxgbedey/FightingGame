@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 4898526289981372742}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 29.923607, y: 499.69974, z: 0}
+  m_LocalPosition: {x: 30.05, y: 499.69974, z: 0}
   m_LocalScale: {x: 19, y: 19, z: 19}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -108,6 +108,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Move
   counterKey: 99
   counterDuration: 10
+  deathColliderSize: {x: 0.7, y: 0.2}
+  deathColliderOffset: {x: 0, y: 0}
+  deathDropAmount: -10
+  deathDropSpeed: 5
+  deathPositionOffset: {x: 0, y: 0}
+  deathMoveSpeed: 3
+  deathSprites:
+  - {fileID: 5995454144303791753, guid: a9ee7045548944cc491b1af2a3bfab44, type: 3}
+  - {fileID: -4993401378998410212, guid: a65303101585a4265b307daa83c39b0c, type: 3}
+  - {fileID: -3065177827359458685, guid: 5aff67f60c4614a7b98f79af33e286c7, type: 3}
+  - {fileID: -719600956914255704, guid: 28509a3789d474135bfea76995d98cd0, type: 3}
+  deathFrameRate: 8
   leftKey: 276
   rightKey: 275
   jumpKey: 273
@@ -223,7 +235,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: -0.07, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -233,7 +245,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.41, y: 0.66}
+  m_Size: {x: 0.2, y: 0.66}
   m_EdgeRadius: 0
 --- !u!50 &7299759700111058419
 Rigidbody2D:

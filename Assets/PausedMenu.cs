@@ -9,8 +9,11 @@ public class PausedMenu : MonoBehaviour
     public static bool isPaused = false;
     public GameObject pauseMenuPrefab;
     private GameObject pauseMenuInstance;
-    public GameObject quitConfirmPanel; // Add this reference in inspector
+    public GameObject quitConfirmPanel;
 
+    [Header("Scene Names")]
+    public string mainMenuSceneName = "MainMenu";
+    public string characterSelectSceneName = "CharacterSelect"; // Add this
 
     void Update()
     {
@@ -47,20 +50,30 @@ public class PausedMenu : MonoBehaviour
 
         foreach (Button button in buttons)
         {
+            string buttonName = button.name.ToLower();
+            string buttonText = button.GetComponentInChildren<Text>()?.text.ToLower() ?? "";
+            
             // Connect based on button name or text
-            if (button.name.Contains("Resume") || button.name.Contains("resume"))
+            if (buttonName.Contains("resume") || buttonText.Contains("resume"))
             {
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(ResumeGame);
             }
-            else if (button.name.Contains("Menu") || button.name.Contains("menu") ||
-                     button.name.Contains("Main") || button.name.Contains("main"))
+            else if (buttonName.Contains("character") || buttonName.Contains("select") || 
+                     buttonName.Contains("charsel") || buttonText.Contains("character") || 
+                     buttonText.Contains("select"))
+            {
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(LoadCharacterSelect);
+            }
+            else if (buttonName.Contains("menu") || buttonName.Contains("main") ||
+                     buttonText.Contains("menu") || buttonText.Contains("main"))
             {
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(LoadMainMenu);
             }
-            else if (button.name.Contains("Quit") || button.name.Contains("quit") ||
-                     button.name.Contains("Exit") || button.name.Contains("exit"))
+            else if (buttonName.Contains("quit") || buttonName.Contains("exit") ||
+                     buttonText.Contains("quit") || buttonText.Contains("exit"))
             {
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(QuitGame);
@@ -73,6 +86,7 @@ public class PausedMenu : MonoBehaviour
         if (pauseMenuInstance != null)
         {
             Destroy(pauseMenuInstance);
+            pauseMenuInstance = null;
         }
 
         Time.timeScale = 1f;
@@ -82,49 +96,88 @@ public class PausedMenu : MonoBehaviour
     public void LoadMainMenu()
     {
         Time.timeScale = 1f; // Make sure to reset time
-        SceneManager.LoadScene("MainMenu"); // Replace with your menu scene name
+        isPaused = false;
+        
+        // Clean up any spawned players if they exist
+        CleanupPlayers();
+        
+        SceneManager.LoadScene(mainMenuSceneName);
     }
 
- public void QuitGame()
-{
-    // Resume time before quitting
-    Time.timeScale = 1f;
-    
-    #if UNITY_EDITOR
-        // If we're in the Unity Editor, stop playing
-        UnityEditor.EditorApplication.isPlaying = false;
-    #elif UNITY_WEBGL
-        // WebGL doesn't support Application.Quit()
-        Debug.Log("Game Quit - But WebGL doesn't support quitting");
-        // You might want to redirect or show a message for WebGL
-    #else
-        // For standalone builds (Windows, Mac, Linux)
-        Application.Quit();
-    #endif
-    
-    Debug.Log("Game Quit");
-}
-
-
-public void QuitConfirmed()
-{
-    Time.timeScale = 1f;
-    
-    #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-    #else
-        Application.Quit();
-    #endif
-    
-    Debug.Log("Game Quit");
-}
-
-public void CancelQuit()
-{
-    if (quitConfirmPanel != null)
+    public void LoadCharacterSelect()
     {
-        quitConfirmPanel.SetActive(false);
-        pauseMenuInstance.SetActive(true); // Show pause menu again
+        Time.timeScale = 1f; // Make sure to reset time
+        isPaused = false;
+        
+        // Clean up any spawned players if they exist
+        CleanupPlayers();
+        
+        SceneManager.LoadScene(characterSelectSceneName);
     }
-}
+
+    private void CleanupPlayers()
+    {
+        // Find and destroy any player objects that might have been marked DontDestroyOnLoad
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject player in players)
+        {
+            Destroy(player);
+        }
+
+        // Also find and destroy any objects with the name "Player_1" or "Player_2"
+        GameObject player1 = GameObject.Find("Player_1");
+        if (player1 != null) Destroy(player1);
+        
+        GameObject player2 = GameObject.Find("Player_2");
+        if (player2 != null) Destroy(player2);
+    }
+
+    public void QuitGame()
+    {
+        // Show confirmation panel instead of quitting immediately
+        if (quitConfirmPanel != null)
+        {
+            quitConfirmPanel.SetActive(true);
+            if (pauseMenuInstance != null)
+            {
+                pauseMenuInstance.SetActive(false);
+            }
+        }
+        else
+        {
+            QuitConfirmed();
+        }
+    }
+
+    public void QuitConfirmed()
+    {
+        // Resume time before quitting
+        Time.timeScale = 1f;
+        
+        #if UNITY_EDITOR
+            // If we're in the Unity Editor, stop playing
+            UnityEditor.EditorApplication.isPlaying = false;
+        #elif UNITY_WEBGL
+            // WebGL doesn't support Application.Quit()
+            Debug.Log("Game Quit - But WebGL doesn't support quitting");
+            // You might want to redirect or show a message for WebGL
+        #else
+            // For standalone builds (Windows, Mac, Linux)
+            Application.Quit();
+        #endif
+        
+        Debug.Log("Game Quit");
+    }
+
+    public void CancelQuit()
+    {
+        if (quitConfirmPanel != null)
+        {
+            quitConfirmPanel.SetActive(false);
+            if (pauseMenuInstance != null)
+            {
+                pauseMenuInstance.SetActive(true); // Show pause menu again
+            }
+        }
+    }
 }

@@ -176,6 +176,26 @@ public class CharacterManager : MonoBehaviour
         if (selectedOption < 0) selectedOption = characterDB.CharacterCount - 1;
         UpdateCharacterSelection(false);
     }
+    // Add this to your CharacterManager class
+public void OnReturnToCharacterSelect()
+{
+    // Reset selection state
+    firstSelectedIndex = -1;
+    secondSelectedIndex = -1;
+    selectingFirst = true;
+    selectedOption = 0;
+    
+    // Clear the character holder
+    SelectedCharacterHolder.firstSelectedPrefab = null;
+    SelectedCharacterHolder.secondSelectedPrefab = null;
+    
+    // Update UI
+    if (selectionStatusText != null)
+        selectionStatusText.text = "Select Character 1";
+    
+    // Refresh the character display
+    UpdateCharacterSelection(true);
+}
 
     // -------------------
     // CHARACTER SPAWNING
