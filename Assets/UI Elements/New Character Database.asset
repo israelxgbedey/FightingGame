@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: New Character Database
   m_EditorClassIdentifier: 
   character:
-  - characterName: 
+  - characterName: Char1
     characterSprite: {fileID: -3748730762174565434, guid: 2eca5d7b8730e4f82a6f59c97fb244ae, type: 3}
-  - characterName: 
+  - characterName: Char2
     characterSprite: {fileID: -2170365443273223004, guid: 35211f46315e34a68a16c691d734603f, type: 3}
   characterScales:
   - {x: 1, y: 1}

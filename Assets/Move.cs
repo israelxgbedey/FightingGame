@@ -6,6 +6,10 @@ using TMPro;
 public class Move : MonoBehaviour
 {
 
+    [Header("Player Identity")]
+    [Tooltip("Set the display name for this character.")]
+    [SerializeField] public string playerName = "Player";  // Shows in Inspector
+    public string PlayerName => playerName; // Read-only access
 
     [Header("Counter System")]
     public KeyCode counterKey = KeyCode.C;
@@ -38,7 +42,7 @@ public class Move : MonoBehaviour
     [Header("Death Animation")]
     public Sprite[] deathSprites;
     public float deathFrameRate = 10f;
-    private bool isDead = false;
+    public bool isDead = false;
 
     [Header("Player Controls")]
     public KeyCode leftKey = KeyCode.LeftArrow;
@@ -166,26 +170,31 @@ public class Move : MonoBehaviour
     // Attack instance reference
     private GameObject currentAttackInstance;
 
-    void Awake()
-    {
-
-        playerCollider = GetComponent<BoxCollider2D>();
-
-if (playerCollider != null)
+private string originalName;
+public string OriginalName => originalName;
+void Awake()
 {
-    originalColliderSize = playerCollider.size;
-    originalColliderOffset = playerCollider.offset;
-}
-        rb = GetComponent<Rigidbody2D>();
-
-        if (rb != null)
-            rb.freezeRotation = true;
-
-        if (spriteRenderer == null)
-            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
-        currentHealth = maxHealth;
+    // REMOVE this line - it's overwriting your Inspector value
+    // playerName = gameObject.name;
+    
+    playerCollider = GetComponent<BoxCollider2D>();
+    
+    if (playerCollider != null)
+    {
+        originalColliderSize = playerCollider.size;
+        originalColliderOffset = playerCollider.offset;
     }
+    rb = GetComponent<Rigidbody2D>();
+
+    if (rb != null)
+        rb.freezeRotation = true;
+
+    if (spriteRenderer == null)
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+    currentHealth = maxHealth;
+}
+
     void Start()
     {
         DetectPlayerControls();
@@ -195,7 +204,6 @@ if (playerCollider != null)
         bool isPlayerOne = players[0] == this.gameObject;
 
         healthBarFill = GameUIManager.Instance.CreateHealthBar(isPlayerOne);
-
         // Test the health bar after 2 seconds
         // Invoke("TestHealthBar", 2f);
     }

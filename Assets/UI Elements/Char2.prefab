@@ -179,6 +179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2e060467e6714067a27f3aba61a2bcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Move
+  playerName: Player2
   counterKey: 99
   counterDuration: 10
   deathColliderSize: {x: 0.7, y: 0.2}
@@ -192,11 +193,12 @@ MonoBehaviour:
   - {fileID: 7066804802866753450, guid: fc150bba4a9c54da9af09928c2a421c7, type: 3}
   - {fileID: -8150866053340279768, guid: 50c924749ec784d568bf1651f7cd8293, type: 3}
   deathFrameRate: 10
+  isDead: 0
   leftKey: 276
   rightKey: 275
   jumpKey: 273
   attackKey: 122
-  speed: 5
+  speed: 10
   jumpVelocity: 7
   groundCheck: {fileID: 0}
   groundCheckRadius: 0.12
@@ -237,7 +239,7 @@ MonoBehaviour:
   - {fileID: -5068114525791036222, guid: 20f1aa90e632742a7a9d8dca6a616f9f, type: 3}
   frameRate: 15
   jumpFrameRate: 6
-  maxHealth: 100
+  maxHealth: 500
   currentHealth: 0
   healthTextFontSize: 14
   healthTextOffset: {x: 0, y: 1.5, z: 0}
