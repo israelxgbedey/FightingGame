@@ -19,7 +19,8 @@ public class Move : MonoBehaviour
     private bool counterSuccess = false; // Track if counter was successfully used
     private float counterCooldownTimer = 0f;
     private float counterCooldown = 1f; // Cooldown before counter can be used again
-
+[Header("Gun Reference")]
+public PlayerAimAndShot aimScript; // Reference to the aiming script
     private BoxCollider2D playerCollider;
 
     private Vector2 originalColliderSize;
@@ -32,6 +33,7 @@ public class Move : MonoBehaviour
     [Header("Death Drop Settings")]
     public float deathDropAmount = 0.5f;
     public float deathDropSpeed = 5f;
+    private bool isPlayingDeathAnimation = false;
 
     [Header("Death Position Offset")]
     [Tooltip("How much the character moves when dying (negative Y = down)")]
@@ -215,7 +217,31 @@ void Awake()
         UpdateHealthBar();
     }
 
-
+void OnCollisionEnter2D(Collision2D collision)
+{
+    // Handle projectile hits
+    if (collision.gameObject.CompareTag("Projectile"))
+    {
+        // Check if we're countering - if so, deflect the projectile
+        if (isCountering)
+        {
+            Debug.Log(gameObject.name + " COUNTERED a projectile!");
+            
+            // Optional: Reflect the projectile back at the shooter
+            // You could add code here to change the projectile's direction
+            
+            Destroy(collision.gameObject); // Destroy the projectile
+            return; // Don't take damage
+        }
+        
+        // Don't take damage if already dead or in damage animation
+        if (isDead || isTakingDamage)
+            return;
+            
+        // The damage is actually handled in the Projectile script's OnCollisionEnter2D
+        // This method is just for additional logic if needed
+    }
+}
     void DetectPlayerControls()
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
@@ -342,70 +368,64 @@ void Awake()
 
 IEnumerator HandleDeath()
 {
+    if (isDead) yield break;
     isDead = true;
+    isPlayingDeathAnimation = true;
+
+    // Stop player input and movement
+    moveInput = 0f;
+    jumpRequested = false;
     isAttacking = false;
     isCountering = false;
     isTakingDamage = false;
-    state = State.Dead;
+    comboQueued = false;
+    comboStep = 0;
 
-    transform.position = new Vector3(
-    transform.position.x,
-    transform.position.y - 0.5f,   // change this value to what looks good
-    transform.position.z
-);
-
-// 🔒 Lock all player input and movement
-moveInput = 0f;
-jumpRequested = false;
-isAttacking = false;
-isCountering = false;
-isTakingDamage = false;
-comboQueued = false;
-comboStep = 0;
-
-// Stop physics movement
-if (rb != null)
-{
-    rb.linearVelocity = Vector2.zero;
-    rb.angularVelocity = 0f;
-}
-transform.position += (Vector3)deathPositionOffset;
-    rb.linearVelocity = Vector2.zero;
-   // rb.bodyType = RigidbodyType2D.Kinematic; // Prevent physics weirdness
-
-    // Destroy attack object
-    if (currentAttackInstance != null)
+    if (rb != null)
     {
-        Destroy(currentAttackInstance);
-        currentAttackInstance = null;
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
     }
 
-    // 🔥 Change collider shape
+    // Change collider for death
     if (playerCollider != null)
     {
         playerCollider.size = deathColliderSize;
         playerCollider.offset = deathColliderOffset;
     }
 
-    // 🔥 Smoothly move character downward
+    state = State.Dead;
+
+    // Play death animation
+    if (deathSprites != null && deathSprites.Length > 0)
+    {
+        for (int i = 0; i < deathSprites.Length; i++)
+        {
+            spriteRenderer.sprite = deathSprites[i];
+            yield return new WaitForSeconds(1f / deathFrameRate);
+        }
+    }
+
+    // Smooth drop motion
+    Vector3 targetPos = transform.position + (Vector3)deathPositionOffset;
     Vector3 startPos = transform.position;
-    float dropAmount = (originalColliderSize.y - deathColliderSize.y) / 2f;
-Vector3 targetPos = startPos + Vector3.down * dropAmount;
-
     float t = 0f;
-
     while (t < 1f)
     {
-        t += Time.deltaTime * deathDropSpeed;
+        t += Time.deltaTime * deathMoveSpeed;
         transform.position = Vector3.Lerp(startPos, targetPos, t);
         yield return null;
     }
-
     transform.position = targetPos;
 
-    Debug.Log(gameObject.name + " has been defeated!");
-}
+    isPlayingDeathAnimation = false;
 
+    Debug.Log(gameObject.name + " has finished death animation.");
+
+    // ✅ Call DeathScreenManager **after animation completes**
+    if (DeathScreenManager.Instance != null)
+        DeathScreenManager.Instance.TriggerGameOver(this);
+}
     void Update()
     {
         if (isDead)
@@ -560,53 +580,53 @@ if (isDead)
     }
 
 
-    void HandleAnimation()
+void HandleAnimation()
+{
+    if (isPlayingDeathAnimation) return; // 🚫 Skip all animation changes while death animation plays
+
+    if (state != lastState)
     {
-        if (state != lastState)
+        frameIndex = 0;
+        frameTimer = 0f;
+        lastState = state;
+    }
+
+    Sprite[] frames = GetFramesForState(state);
+    if (frames != null && frames.Length > 0)
+    {
+        float fps = frameRate;
+        if (state == State.Dead)
         {
-            frameIndex = 0;
-            frameTimer = 0f;
-            lastState = state;
+            fps = deathFrameRate;
+        }
+        if (state == State.Attack)
+        {
+            if (isUsingSecondaryAttack && secondaryAttackFrameRate > 0f)
+                fps = secondaryAttackFrameRate;
+        }
+        else if (state == State.Jump && jumpFrameRate > 0f)
+        {
+            fps = jumpFrameRate;
         }
 
-        Sprite[] frames = GetFramesForState(state);
-        if (frames != null && frames.Length > 0)
+        frameTimer += Time.deltaTime;
+        float frameTime = 1f / Mathf.Max(1f, fps);
+
+        if (frameTimer >= frameTime)
         {
-            float fps = frameRate;
+            frameTimer -= frameTime;
             if (state == State.Dead)
             {
-                fps = deathFrameRate;
+                frameIndex = Mathf.Min(frameIndex + 1, frames.Length - 1);
             }
-            // Use appropriate frame rate based on attack type
-            if (state == State.Attack)
+            else
             {
-                if (isUsingSecondaryAttack && secondaryAttackFrameRate > 0f)
-                    fps = secondaryAttackFrameRate;
-                // Otherwise use default frameRate
+                frameIndex = (frameIndex + 1) % frames.Length;
             }
-            else if (state == State.Jump && jumpFrameRate > 0f)
-            {
-                fps = jumpFrameRate;
-            }
-
-            frameTimer += Time.deltaTime;
-            float frameTime = 1f / Mathf.Max(1f, fps);
-
-            if (frameTimer >= frameTime)
-            {
-                frameTimer -= frameTime;
-                if (state == State.Dead)
-                {
-                    frameIndex = Mathf.Min(frameIndex + 1, frames.Length - 1);
-                }
-                else
-                {
-                    frameIndex = (frameIndex + 1) % frames.Length;
-                }
-                spriteRenderer.sprite = frames[frameIndex];
-            }
+            spriteRenderer.sprite = frames[frameIndex];
         }
     }
+}
 
     void StartComboAttack()
     {
@@ -993,14 +1013,19 @@ if (isDead)
         UpdateHealthBar();
     }
 
-    void Flip()
+void Flip()
+{
+    facingRight = !facingRight;
+    Vector3 s = transform.localScale;
+    s.x *= -1f;
+    transform.localScale = s;
+    
+    // Notify the aim script about facing direction change
+    if (aimScript != null)
     {
-        facingRight = !facingRight;
-        Vector3 s = transform.localScale;
-        s.x *= -1f;
-        transform.localScale = s;
+        aimScript.SetFacingDirection(facingRight);
     }
-
+}
     void OnDrawGizmosSelected()
     {
         if (groundCheck != null)

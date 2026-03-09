@@ -185,14 +185,14 @@ MonoBehaviour:
   deathColliderSize: {x: 0.7, y: 0.2}
   deathColliderOffset: {x: 0, y: 0}
   deathDropAmount: 0.5
-  deathDropSpeed: 5
+  deathDropSpeed: 10
   deathPositionOffset: {x: 0, y: -0.5}
   deathMoveSpeed: 3
   deathSprites:
   - {fileID: -3265243880913837875, guid: 009e35aa58e26497998195cef55d746c, type: 3}
   - {fileID: 7066804802866753450, guid: fc150bba4a9c54da9af09928c2a421c7, type: 3}
   - {fileID: -8150866053340279768, guid: 50c924749ec784d568bf1651f7cd8293, type: 3}
-  deathFrameRate: 10
+  deathFrameRate: 5
   isDead: 0
   leftKey: 276
   rightKey: 275

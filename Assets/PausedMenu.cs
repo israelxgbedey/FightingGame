@@ -151,7 +151,7 @@ public class PausedMenu : MonoBehaviour
 
     public void QuitConfirmed()
     {
-        // Resume time before quitting
+
         Time.timeScale = 1f;
         
         #if UNITY_EDITOR

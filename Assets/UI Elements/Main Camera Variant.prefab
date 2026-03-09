@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &3322123539416682629
+--- !u!1001 &1338492363184665495
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3121515989236249705, guid: 2bd3bc99b695c49f3b371948e1330357, type: 3}
       propertyPath: m_Name
-      value: Main Camera
+      value: Main Camera Variant
       objectReference: {fileID: 0}
     - target: {fileID: 3121515989236249705, guid: 2bd3bc99b695c49f3b371948e1330357, type: 3}
       propertyPath: m_TagString
@@ -66,20 +66,20 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 3121515989236249705, guid: 2bd3bc99b695c49f3b371948e1330357, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7857165211177416064}
+      addedObject: {fileID: 619011427119481135}
   m_SourcePrefab: {fileID: 100100000, guid: 2bd3bc99b695c49f3b371948e1330357, type: 3}
---- !u!1 &381494805169300716 stripped
+--- !u!1 &4162062687696652286 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3121515989236249705, guid: 2bd3bc99b695c49f3b371948e1330357, type: 3}
-  m_PrefabInstance: {fileID: 3322123539416682629}
+  m_PrefabInstance: {fileID: 1338492363184665495}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7857165211177416064
+--- !u!114 &619011427119481135
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 381494805169300716}
+  m_GameObject: {fileID: 4162062687696652286}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 39d1c5771ebfa413586d14d0f47ac067, type: 3}

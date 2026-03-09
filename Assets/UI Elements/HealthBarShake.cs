@@ -1,41 +1,46 @@
 using UnityEngine;
-using System.Collections;
 
 public class HealthBarShake : MonoBehaviour
 {
     RectTransform rect;
 
+    Vector2 originalPosition;
+
     public float shakeDuration = 0.15f;
     public float shakeMagnitude = 6f;
+
+    float timer = 0f;
+    bool shaking = false;
 
     void Awake()
     {
         rect = GetComponent<RectTransform>();
+        originalPosition = rect.anchoredPosition;
     }
 
-    public void Shake()
+    void Update()
     {
-        StopAllCoroutines();
-        StartCoroutine(DoShake());
-    }
+        if (!shaking) return;
 
-    IEnumerator DoShake()
-    {
-        Vector2 originalPos = rect.anchoredPosition;
+        timer += Time.deltaTime;
 
-        float timer = 0f;
-
-        while (timer < shakeDuration)
+        if (timer < shakeDuration)
         {
             float x = Random.Range(-shakeMagnitude, shakeMagnitude);
             float y = Random.Range(-shakeMagnitude, shakeMagnitude);
 
-            rect.anchoredPosition = originalPos + new Vector2(x, y);
-
-            timer += Time.deltaTime;
-            yield return null;
+            rect.anchoredPosition = originalPosition + new Vector2(x, y);
         }
+        else
+        {
+            rect.anchoredPosition = originalPosition;
+            shaking = false;
+        }
+    }
 
-        rect.anchoredPosition = originalPos;
+    public void Shake()
+    {
+        timer = 0f;
+        shaking = true;
     }
 }

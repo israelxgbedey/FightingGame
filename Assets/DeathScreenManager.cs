@@ -15,6 +15,20 @@ public class DeathScreenManager : MonoBehaviour
     private Move[] players;
     private bool gameOver = false;
     private GameObject deathScreenInstance;
+    public static DeathScreenManager Instance;
+
+
+
+
+
+
+void Awake()
+{
+    if (Instance == null)
+        Instance = this;
+    else
+        Destroy(gameObject);
+}
 
     void Start()
     {
@@ -61,21 +75,9 @@ if (deathMessageText == null)
         }
     }
 
-    void Update()
-    {
-        if (gameOver || players == null || players.Length == 0) return;
+ 
 
-        foreach (Move player in players)
-        {
-            if (player != null && player.isDead)
-            {
-                TriggerGameOver(player);
-                break;
-            }
-        }
-    }
-
-void TriggerGameOver(Move deadPlayer)
+public void TriggerGameOver(Move deadPlayer)
 {
     gameOver = true;
 
