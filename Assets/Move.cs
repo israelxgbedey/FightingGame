@@ -633,9 +633,6 @@ void HandleAnimation()
         // Don't increment combo if we're in a counter state or just got countered
         // This check might be redundant now since we reset combo in OnAttackHit
 
-        comboStep++;
-        comboStep = Mathf.Clamp(comboStep, 1, 3);
-
         isAttacking = true;
         isUsingSecondaryAttack = false;
 
@@ -881,45 +878,51 @@ void HandleAnimation()
 
 
 
-    public void OnAttackHit(Collider2D other)
+public void OnAttackHit(Collider2D other)
+{
+    if (other.CompareTag("Player") && other.gameObject != this.gameObject)
     {
-        if (other.CompareTag("Player") && other.gameObject != this.gameObject)
+        Move otherPlayer = other.GetComponent<Move>();
+
+        if (otherPlayer != null && !otherPlayer.isTakingDamage)
         {
-            Move otherPlayer = other.GetComponent<Move>();
-            if (otherPlayer != null && !otherPlayer.isTakingDamage)
+            if (otherPlayer.isCountering)
             {
-                // Check if the other player is countering
-                if (otherPlayer.isCountering)
+                Debug.Log(gameObject.name + "'s attack was COUNTERED! Combo reset.");
+
+                comboStep = 0;
+                comboTimer = 0f;
+                comboQueued = false;
+
+                if (activeComboText != null)
                 {
-                    Debug.Log(gameObject.name + "'s attack was COUNTERED! Combo reset.");
-
-                    // Reset combo for the attacker
-                    comboStep = 0;
-                    comboTimer = 0f;
-                    comboQueued = false;
-
-                    // Optional: Hide combo UI if it's showing
-                    if (activeComboText != null)
-                    {
-                        Destroy(activeComboText);
-                        activeComboText = null;
-                    }
-
-                    return; // Don't proceed with damage or combo
+                    Destroy(activeComboText);
+                    activeComboText = null;
                 }
 
-                Vector2 knockbackDirection = (other.transform.position - transform.position).normalized;
-                Vector2 knockback = knockbackDirection * 5f;
-
-                // Use appropriate damage based on attack type
-                int damageToApply = isUsingSecondaryAttack ? secondaryAttackDamage : attackDamage + (comboStep * 5);
-                otherPlayer.TakeDamage(damageToApply, knockback);
-
-                // Combo is only incremented if the attack wasn't countered
-                // The combo increment happens in StartComboAttack already, so we don't need to do anything here
+                return;
             }
+
+            Vector2 knockbackDirection =
+                (other.transform.position - transform.position).normalized;
+
+            Vector2 knockback = knockbackDirection * 5f;
+
+            int damageToApply =
+                isUsingSecondaryAttack ? secondaryAttackDamage : attackDamage + (comboStep * 5);
+
+            otherPlayer.TakeDamage(damageToApply, knockback);
+
+            // ✅ Combo increases ONLY when hit connects
+            comboStep++;
+            comboStep = Mathf.Clamp(comboStep, 1, 3);
+
+            comboTimer = comboResetTime;
+
+            UpdateComboUI();
         }
     }
+}
 
     Sprite[] GetFramesForState(State s)
     {
