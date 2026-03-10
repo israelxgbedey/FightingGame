@@ -110,6 +110,10 @@ public PlayerAimAndShot aimScript; // Reference to the aiming script
     public Sprite[] secondaryAttackSprites;
     public float secondaryAttackFrameRate = 12f; // Optional different frame rate for secondary attack
 
+
+    [Header("Hit Effects")]
+public ParticleSystem hitParticles;
+
     [Header("Combo System")]
     public float comboResetTime = 0.8f; // Time allowed between combo presses
     private int comboStep = 0;
@@ -639,6 +643,9 @@ void HandleAnimation()
         attackTimer = attackDuration;
         comboTimer = comboResetTime;
 
+        comboStep++;
+        comboStep = Mathf.Clamp(comboStep, 1, 3);
+
         ActivateAttackObject();
 
         // 🔥 Show combo UI
@@ -911,11 +918,22 @@ public void OnAttackHit(Collider2D other)
             int damageToApply =
                 isUsingSecondaryAttack ? secondaryAttackDamage : attackDamage + (comboStep * 5);
 
-            otherPlayer.TakeDamage(damageToApply, knockback);
+   otherPlayer.TakeDamage(damageToApply, knockback);
 
-            // ✅ Combo increases ONLY when hit connects
-            comboStep++;
-            comboStep = Mathf.Clamp(comboStep, 1, 3);
+// 💥 Spawn hit particles
+if (hitParticles != null)
+{
+    Vector3 hitPos = other.transform.position;
+
+    ParticleSystem particles = Instantiate(hitParticles, hitPos, Quaternion.identity);
+    particles.Play();
+
+    Destroy(particles.gameObject, 1f);
+}
+
+// Combo increases ONLY when hit connects
+comboStep++;
+comboStep = Mathf.Clamp(comboStep, 1, 3);
 
             comboTimer = comboResetTime;
 

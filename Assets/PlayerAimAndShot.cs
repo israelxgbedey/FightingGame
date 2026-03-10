@@ -58,80 +58,104 @@ public Transform customSpawnPoint; // Optional: specific spawn point transform
         }
     }
 
-    void AimGunAtMouse()
+void AimGunAtMouse()
+{
+    Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+    Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(
+        new Vector3(mouseScreenPos.x, mouseScreenPos.y, gunTransform.position.z - mainCamera.transform.position.z)
+    );
+
+    Vector3 direction = mouseWorldPos - gunTransform.position;
+
+    if (direction.sqrMagnitude > 0.001f)
     {
-        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
-        Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(
-            new Vector3(mouseScreenPos.x, mouseScreenPos.y, gunTransform.position.z - mainCamera.transform.position.z)
-        );
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        Vector3 direction = mouseWorldPos - gunTransform.position;
-
-        if (direction.sqrMagnitude > 0.001f)
+        // Apply angle limits based on facing direction
+        if (isFacingRight)
         {
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-            // Apply angle limits based on facing direction
-            if (isFacingRight)
+            // When facing right: clamp to range between minAngle and maxAngle
+            // This allows smooth movement between -90° and 90°
+            angle = Mathf.Clamp(angle, minAngle, maxAngle);
+        }
+        else
+        {
+            // When facing left: we want the same relative freedom
+            // Map the angle to the left-facing range (90° to 270°)
+            
+            // First, normalize the angle to 0-360 range
+            float normalizedAngle = angle;
+            if (normalizedAngle < 0)
             {
-                // Normal limits when facing right (-90 to 90)
-                angle = Mathf.Clamp(angle, minAngle, maxAngle);
+                normalizedAngle += 360;
+            }
+            
+            // For left-facing, we want the angle to be between 90° and 270°
+            // This gives the same 180° arc as right-facing, but on the left side
+            if (normalizedAngle > 90 && normalizedAngle < 270)
+            {
+                // Angle is already in the valid range
+                angle = normalizedAngle;
             }
             else
             {
-                // Reversed limits when facing left (90 to 270 or -90 to -270)
-                // This allows the gun to aim upward when facing left
-                if (angle > 90)
-                    angle = Mathf.Clamp(angle, 90, 270);
-                else if (angle < -90)
-                    angle = Mathf.Clamp(angle, -270, -90);
+                // Angle is outside the valid range, clamp to the nearest edge
+                float distTo90 = Mathf.Abs(normalizedAngle - 90);
+                float distTo270 = Mathf.Abs(normalizedAngle - 270);
+                
+                if (distTo90 < distTo270)
+                {
+                    angle = 90;
+                }
                 else
-                    angle = Mathf.Clamp(angle, 90, 270); // Default to upward range
-            }
-
-            Quaternion targetRotation = Quaternion.Euler(0f, 0f, angle);
-            gunTransform.rotation = Quaternion.Lerp(gunTransform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            
-            // Flip gun sprite if needed (when aiming behind)
-            if (gunSpriteRenderer != null)
-            {
-                // Flip gun sprite when aiming backwards relative to player facing
-                bool shouldFlip = (isFacingRight && (angle > 90 || angle < -90)) || 
-                                 (!isFacingRight && (angle < 90 && angle > -90));
-                gunSpriteRenderer.flipY = shouldFlip;
+                {
+                    angle = 270;
+                }
             }
         }
-    }
 
-void ShootProjectile()
-{
-    if (projectilePrefab == null) return;
-
-    Vector3 spawnPos;
-    
-    // Use custom spawn point if specified
-    if (useCustomSpawnPoint && customSpawnPoint != null)
-    {
-        spawnPos = customSpawnPoint.position;
-    }
-    else
-    {
-        // Calculate spawn position with offset
-        Vector3 offset = new Vector3(bulletSpawnOffset.x, bulletSpawnOffset.y, 0f);
-        // Transform the offset from local to world space
-        offset = gunTransform.TransformDirection(offset);
+        Quaternion targetRotation = Quaternion.Euler(0f, 0f, angle);
+        gunTransform.rotation = Quaternion.Slerp(gunTransform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         
-        spawnPos = gunTransform.position + gunTransform.right * bulletSpawnDistance + offset;
-    }
-
-    GameObject proj = Instantiate(projectilePrefab, spawnPos, gunTransform.rotation);
-
-    Rigidbody2D rb = proj.GetComponent<Rigidbody2D>();
-    if (rb != null)
-    {
-        rb.linearVelocity = gunTransform.right * projectileSpeed;
+        // Flip gun sprite if needed (when aiming backwards relative to player facing)
+        if (gunSpriteRenderer != null)
+        {
+            // Determine if gun should be flipped based on aiming direction
+            bool shouldFlip = false;
+            
+            if (isFacingRight)
+            {
+                // When facing right, flip if aiming left (angle > 90° or < -90°)
+                shouldFlip = (angle > 90 || angle < -90);
+            }
+            else
+            {
+                // When facing left, flip if aiming right (angle between -90° and 90°)
+                // Convert angle to -180 to 180 range for easier comparison
+                float compareAngle = angle;
+                if (compareAngle > 180) compareAngle -= 360;
+                shouldFlip = (compareAngle > -90 && compareAngle < 90);
+            }
+            
+            gunSpriteRenderer.flipY = shouldFlip;
+        }
     }
 }
+
+    void ShootProjectile()
+    {
+        if (projectilePrefab == null) return;
+
+        Vector3 spawnPos = gunTransform.position + gunTransform.right * bulletSpawnDistance;
+
+        GameObject proj = Instantiate(projectilePrefab, spawnPos, gunTransform.rotation);
+
+        Rigidbody2D rb = proj.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = gunTransform.right * projectileSpeed;
+        }
+    }
 
     // Public method called by Move script when player flips
     public void SetFacingDirection(bool facingRight)
