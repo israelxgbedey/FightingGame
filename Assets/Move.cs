@@ -16,31 +16,31 @@ public class Move : MonoBehaviour
     [SerializeField] public string playerName = "Player";  // Shows in Inspector
     public string PlayerName => playerName; // Read-only access
 
-    [Header("Counter System")]
-    ublic KeyCode counterKey = KeyCode.C;
+[Header("Counter System")]
+public KeyCode counterKey = KeyCode.C;
 
-    public float maxCounterHoldTime = 5f;   // Maximum hold time
-    public float counterCooldown = 1f;
+public float maxCounterHoldTime = 5f;   // Maximum hold time
+public float counterCooldown = 1f;
 
-    private bool isCountering = false;
-    private float counterHoldTimer = 0f;
-    rivate float counterCooldownTimer = 0f;
-    [Header("Counter Blur Effect")]
-    public float blurSpawnRate = 0.05f;
-    public float blurFadeTime = 0.3f;
+private bool isCountering = false;
+private float counterHoldTimer = 0f;
+private float counterCooldownTimer = 0f;
+[Header("Counter Blur Effect")]
+public float blurSpawnRate = 0.05f;
+public float blurFadeTime = 0.3f;
 
-    private float blurTimer = 0f;
+private float blurTimer = 0f;
 
     [Header("Counter Shield")]
-    public GameObject counterShieldPrefab;
-    public float shieldDuration = 0.6f;
+public GameObject counterShieldPrefab;
+public float shieldDuration = 0.6f;
 
-    public Vector3 shieldOffset = Vector3.zero; // Adjustable in Inspector
+public Vector3 shieldOffset = Vector3.zero; // Adjustable in Inspector
 
-    private GameObject activeShield;
+private GameObject activeShield;
 
-    [Header("Gun Reference")]
-    public PlayerAimAndShot aimScript; // Reference to the aiming script
+[Header("Gun Reference")]
+public PlayerAimAndShot aimScript; // Reference to the aiming script
     private BoxCollider2D playerCollider;
 
     private Vector2 originalColliderSize;
@@ -135,7 +135,7 @@ public class Move : MonoBehaviour
 
 
     [Header("Hit Effects")]
-    public ParticleSystem hitParticles;
+public ParticleSystem hitParticles;
 
     [Header("Combo System")]
     public float comboResetTime = 0.8f; // Time allowed between combo presses
@@ -199,10 +199,10 @@ public class Move : MonoBehaviour
     // Attack instance reference
     private GameObject currentAttackInstance;
 
-    private string originalName;
-    public string OriginalName => originalName;
-    void Awake()
-    {
+private string originalName;
+public string OriginalName => originalName;
+void Awake()
+{
     // REMOVE this line - it's overwriting your Inspector value
     // playerName = gameObject.name;
     
@@ -589,15 +589,23 @@ if (isCountering)
             SpawnBlur();
         }
 
-    
+           // Spawn blur copies
+        blurTimer += Time.deltaTime;
+        if (blurTimer >= blurSpawnRate)
+        {
+            blurTimer = 0f;
+            SpawnBlur();
+        }
 
+        // Stop if key released OR timer exceeded
+        if (!Input.GetKey(counterKey) || counterHoldTimer >= maxCounterHoldTime)
+        {
+            StopCounter();
+        }
+        
     counterHoldTimer += Time.deltaTime;
 
-    // Stop if key released OR timer exceeded
-    if (!Input.GetKey(counterKey) || counterHoldTimer >= maxCounterHoldTime)
-    {
-        StopCounter();
-    }
+
 }
 
         // Secondary Attack
