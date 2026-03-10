@@ -179,9 +179,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2e060467e6714067a27f3aba61a2bcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Move
+  postProcessVolume: {fileID: 1905011241982229126, guid: 52a760ab6ab244c949753c31554fb740, type: 3}
   playerName: Player2
   counterKey: 99
-  counterDuration: 10
+  maxCounterHoldTime: 5
+  counterCooldown: 1
+  blurSpawnRate: 0.05
+  blurFadeTime: 0.3
+  counterShieldPrefab: {fileID: 8646968032707442885, guid: 3eae4888041ad4f9792ab37cb9332971, type: 3}
+  shieldDuration: 0.6
+  shieldOffset: {x: 0.02, y: 0, z: 0}
   aimScript: {fileID: 0}
   deathColliderSize: {x: 0.7, y: 0.2}
   deathColliderOffset: {x: 0, y: 0}

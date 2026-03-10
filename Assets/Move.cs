@@ -2,25 +2,45 @@
 using System.Collections;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+
 
 public class Move : MonoBehaviour
 {
-
+    public Volume postProcessVolume;
+    MotionBlur motionBlur;
     [Header("Player Identity")]
     [Tooltip("Set the display name for this character.")]
     [SerializeField] public string playerName = "Player";  // Shows in Inspector
     public string PlayerName => playerName; // Read-only access
 
     [Header("Counter System")]
-    public KeyCode counterKey = KeyCode.C;
-    public float counterDuration = 0.6f;
+    ublic KeyCode counterKey = KeyCode.C;
+
+    public float maxCounterHoldTime = 5f;   // Maximum hold time
+    public float counterCooldown = 1f;
+
     private bool isCountering = false;
-    private float counterTimer = 0f;
-    private bool counterSuccess = false; // Track if counter was successfully used
-    private float counterCooldownTimer = 0f;
-    private float counterCooldown = 1f; // Cooldown before counter can be used again
-[Header("Gun Reference")]
-public PlayerAimAndShot aimScript; // Reference to the aiming script
+    private float counterHoldTimer = 0f;
+    rivate float counterCooldownTimer = 0f;
+    [Header("Counter Blur Effect")]
+    public float blurSpawnRate = 0.05f;
+    public float blurFadeTime = 0.3f;
+
+    private float blurTimer = 0f;
+
+    [Header("Counter Shield")]
+    public GameObject counterShieldPrefab;
+    public float shieldDuration = 0.6f;
+
+    public Vector3 shieldOffset = Vector3.zero; // Adjustable in Inspector
+
+    private GameObject activeShield;
+
+    [Header("Gun Reference")]
+    public PlayerAimAndShot aimScript; // Reference to the aiming script
     private BoxCollider2D playerCollider;
 
     private Vector2 originalColliderSize;
@@ -34,6 +54,9 @@ public PlayerAimAndShot aimScript; // Reference to the aiming script
     public float deathDropAmount = 0.5f;
     public float deathDropSpeed = 5f;
     private bool isPlayingDeathAnimation = false;
+
+
+
 
     [Header("Death Position Offset")]
     [Tooltip("How much the character moves when dying (negative Y = down)")]
@@ -112,7 +135,7 @@ public PlayerAimAndShot aimScript; // Reference to the aiming script
 
 
     [Header("Hit Effects")]
-public ParticleSystem hitParticles;
+    public ParticleSystem hitParticles;
 
     [Header("Combo System")]
     public float comboResetTime = 0.8f; // Time allowed between combo presses
@@ -176,10 +199,10 @@ public ParticleSystem hitParticles;
     // Attack instance reference
     private GameObject currentAttackInstance;
 
-private string originalName;
-public string OriginalName => originalName;
-void Awake()
-{
+    private string originalName;
+    public string OriginalName => originalName;
+    void Awake()
+    {
     // REMOVE this line - it's overwriting your Inspector value
     // playerName = gameObject.name;
     
@@ -204,7 +227,7 @@ void Awake()
     void Start()
     {
         DetectPlayerControls();
-
+        postProcessVolume.profile.TryGet(out motionBlur);
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         System.Array.Sort(players, (a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
         bool isPlayerOne = players[0] == this.gameObject;
@@ -213,6 +236,55 @@ void Awake()
         // Test the health bar after 2 seconds
         // Invoke("TestHealthBar", 2f);
     }
+    void SpawnBlur()
+{
+    GameObject blur = new GameObject("Blur");
+
+    SpriteRenderer blurRenderer = blur.AddComponent<SpriteRenderer>();
+    blurRenderer.sprite = spriteRenderer.sprite;
+    blurRenderer.flipX = spriteRenderer.flipX;
+    blurRenderer.sortingLayerID = spriteRenderer.sortingLayerID;
+    blurRenderer.sortingOrder = spriteRenderer.sortingOrder - 1;
+
+    blur.transform.position = spriteRenderer.transform.position;
+    blur.transform.localScale = spriteRenderer.transform.lossyScale;
+
+    StartCoroutine(FadeBlur(blurRenderer));
+}
+
+IEnumerator FadeBlur(SpriteRenderer renderer)
+{
+    float t = 0f;
+    Color startColor = new Color(1,1,1,0.6f);
+
+    renderer.color = startColor;
+
+    while (t < blurFadeTime)
+    {
+        t += Time.deltaTime;
+
+        float alpha = Mathf.Lerp(startColor.a, 0f, t / blurFadeTime);
+        renderer.color = new Color(1,1,1,alpha);
+
+        yield return null;
+    }
+
+    Destroy(renderer.gameObject);
+}
+void StopCounter()
+{
+    motionBlur.intensity.value = 0f;
+    isCountering = false;
+    counterCooldownTimer = counterCooldown;
+
+    Debug.Log(gameObject.name + " stopped countering");
+
+    if (activeShield != null)
+    {
+        Destroy(activeShield);
+        activeShield = null;
+    }
+}
 
     void TestHealthBar()
     {
@@ -322,14 +394,38 @@ void OnCollisionEnter2D(Collision2D collision)
         // If attackObject is a prefab reference, we'll instantiate it when needed
     }
 
-    void StartCounter()
+void StartCounter()
+{
+    isCountering = true;
+    counterHoldTimer = 0f;
+
+    motionBlur.intensity.value = 0.8f;
+
+    Debug.Log(gameObject.name + " started countering");
+
+    if (counterShieldPrefab != null)
     {
-        isCountering = true;
-        counterTimer = counterDuration;
+        if (activeShield != null)
+            Destroy(activeShield);
 
-        Debug.Log(gameObject.name + " is countering!");
+        activeShield = Instantiate(counterShieldPrefab, transform.position, Quaternion.identity, transform);
+        activeShield.transform.localPosition = shieldOffset;
     }
+}
 
+
+
+
+IEnumerator RemoveShieldAfterTime(float duration)
+{
+    yield return new WaitForSeconds(duration);
+
+    if (activeShield != null)
+    {
+        Destroy(activeShield);
+        activeShield = null;
+    }
+}
     void LateUpdate()
     {
         if (healthCanvasObject != null)
@@ -476,11 +572,33 @@ if (isDead)
             }
         }
 
-        // Counter - check cooldown too
-        if (Input.GetKeyDown(counterKey) && !isCountering && !isAttacking && counterCooldownTimer <= 0f)
+     // Start counter when key is pressed
+if (Input.GetKeyDown(counterKey) && !isCountering && !isAttacking && counterCooldownTimer <= 0f)
+{
+    StartCounter();
+}
+
+// While holding counter
+if (isCountering)
+{
+           // Spawn blur copies
+        blurTimer += Time.deltaTime;
+        if (blurTimer >= blurSpawnRate)
         {
-            StartCounter();
+            blurTimer = 0f;
+            SpawnBlur();
         }
+
+    
+
+    counterHoldTimer += Time.deltaTime;
+
+    // Stop if key released OR timer exceeded
+    if (!Input.GetKey(counterKey) || counterHoldTimer >= maxCounterHoldTime)
+    {
+        StopCounter();
+    }
+}
 
         // Secondary Attack
         if (Input.GetKeyDown(secondaryAttackKey) && !isAttacking)
@@ -488,21 +606,7 @@ if (isDead)
 
         moveInput = h;
 
-        // Handle counter timer and cooldown
-        if (isCountering)
-        {
-            counterTimer -= Time.deltaTime;
-
-            // Visual feedback while countering (optional)
-            Debug.Log(gameObject.name + " is countering! Time left: " + counterTimer);
-
-            if (counterTimer <= 0f)
-            {
-                isCountering = false;
-                counterCooldownTimer = counterCooldown; // Start cooldown
-            }
-        }
-
+   
         // Handle counter cooldown
         if (counterCooldownTimer > 0f)
         {
@@ -563,6 +667,10 @@ if (isDead)
         else if (Mathf.Abs(moveInput) > 0.01f) state = State.Run;
         else state = State.Idle;
 
+if (counterCooldownTimer > 0f)
+{
+    counterCooldownTimer -= Time.deltaTime;
+}
         // Handle flipping
         if (moveInput > 0.01f && !facingRight) Flip();
         else if (moveInput < -0.01f && facingRight) Flip();
