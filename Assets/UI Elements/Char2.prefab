@@ -278,6 +278,7 @@ MonoBehaviour:
   secondaryAttackFrameRate: 12
   hitParticles: {fileID: 2569288995606077527, guid: 62dfae1fabb49475abd0a6cf51f5e4cd, type: 3}
   comboResetTime: 0.8
+  maxCombo: 10
   comboTextPrefab: {fileID: 3152053438198682657, guid: 0385eef6d9030445da86b8d577e02f07, type: 3}
   comboTextOffset: {x: 0, y: 2, z: 0}
   comboTextDuration: 1

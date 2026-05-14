@@ -142,6 +142,7 @@ public ParticleSystem hitParticles;
     private int comboStep = 0;
     private float comboTimer = 0f;
     private bool comboQueued = false;
+    public int maxCombo = 10;
 
 
 
@@ -198,6 +199,7 @@ public ParticleSystem hitParticles;
     private GameObject healthCanvasObject;
     // Attack instance reference
     private GameObject currentAttackInstance;
+    private bool hasHitThisAttack = false;
 
 private string originalName;
 public string OriginalName => originalName;
@@ -755,13 +757,12 @@ void HandleAnimation()
 
         isAttacking = true;
         isUsingSecondaryAttack = false;
+        hasHitThisAttack = false;
 
         attackTimer = attackDuration;
         comboTimer = comboResetTime;
 
-        comboStep++;
-        comboStep = Mathf.Clamp(comboStep, 1, 3);
-
+        comboStep = Mathf.Clamp(comboStep, 1, maxCombo);
         ActivateAttackObject();
 
         // 🔥 Show combo UI
@@ -1007,6 +1008,8 @@ public void OnAttackHit(Collider2D other)
     {
         Move otherPlayer = other.GetComponent<Move>();
 
+     
+
         if (otherPlayer != null && !otherPlayer.isTakingDamage)
         {
             if (otherPlayer.isCountering)
@@ -1025,6 +1028,10 @@ public void OnAttackHit(Collider2D other)
 
                 return;
             }
+
+                if (hasHitThisAttack) return;
+
+    hasHitThisAttack = true;
 
             Vector2 knockbackDirection =
                 (other.transform.position - transform.position).normalized;
@@ -1049,7 +1056,7 @@ if (hitParticles != null)
 
 // Combo increases ONLY when hit connects
 comboStep++;
-comboStep = Mathf.Clamp(comboStep, 1, 3);
+comboStep = Mathf.Clamp(comboStep, 1, maxCombo);
 
             comboTimer = comboResetTime;
 
@@ -1187,10 +1194,11 @@ public class AttackTriggerHandler : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (playerMove != null)
-        {
-            playerMove.OnAttackHit(other);
-        }
+    
+        if(other.CompareTag("Player"))
+{
+    playerMove.OnAttackHit(other);
+}
         else if (playerAnimation != null)
         {
             playerAnimation.OnAttackHit(other);

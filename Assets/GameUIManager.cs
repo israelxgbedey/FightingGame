@@ -9,6 +9,8 @@ public class GameUIManager : MonoBehaviour
 
     public Sprite healthBarSprite;
 
+    public Sprite healthFillSprite;
+
     private Image player1Special;
     private Image player2Special;
 
@@ -54,125 +56,129 @@ public class GameUIManager : MonoBehaviour
         canvasObj.AddComponent<GraphicRaycaster>();
     }
 
-    public Image CreateHealthBar(bool isPlayerOne)
+public Image CreateHealthBar(bool isPlayerOne)
+{
+    // ======================
+    // CONTAINER
+    // ======================
+    GameObject container = new GameObject(isPlayerOne ? "P1_Health" : "P2_Health");
+    container.transform.SetParent(canvas.transform);
+
+    RectTransform rect = container.AddComponent<RectTransform>();
+    rect.sizeDelta = new Vector2(500, 70);
+
+    if (isPlayerOne)
     {
-        GameObject container = new GameObject(isPlayerOne ? "P1_Health" : "P2_Health");
-        container.transform.SetParent(canvas.transform);
-
-        RectTransform rect = container.AddComponent<RectTransform>();
-
-        // Increased height so special meter fits
-        rect.sizeDelta = new Vector2(500, 70);
-
-        if (isPlayerOne)
-        {
-            rect.anchorMin = new Vector2(1, 1);
-            rect.anchorMax = new Vector2(1, 1);
-            rect.anchoredPosition = new Vector2(-260, -60);
-        }
-        else
-        {
-            rect.anchorMin = new Vector2(0, 1);
-            rect.anchorMax = new Vector2(0, 1);
-            rect.anchoredPosition = new Vector2(260, -60);
-        }
-
-        container.AddComponent<HealthBarShake>();
-        HealthBarDamage damageSystem = container.AddComponent<HealthBarDamage>();
-
-        // ======================
-        // HEALTH BAR HOLDER
-        // ======================
-
-        GameObject barHolder = new GameObject("HealthBar");
-        barHolder.transform.SetParent(container.transform);
-
-        RectTransform holderRect = barHolder.AddComponent<RectTransform>();
-        holderRect.anchorMin = new Vector2(0, 1);
-        holderRect.anchorMax = new Vector2(1, 1);
-        holderRect.pivot = new Vector2(0.5f, 1);
-        holderRect.sizeDelta = new Vector2(0, 50);
-        holderRect.anchoredPosition = Vector2.zero;
-
-        // ======================
-        // BACKGROUND
-        // ======================
-
-        GameObject bg = new GameObject("BG");
-        bg.transform.SetParent(barHolder.transform);
-
-        Image bgImage = bg.AddComponent<Image>();
-        bgImage.sprite = healthBarSprite;
-        bgImage.type = Image.Type.Sliced;
-        bgImage.color = Color.black;
-
-        RectTransform bgRect = bg.GetComponent<RectTransform>();
-        bgRect.anchorMin = Vector2.zero;
-        bgRect.anchorMax = Vector2.one;
-        bgRect.offsetMin = Vector2.zero;
-        bgRect.offsetMax = Vector2.zero;
-
-        // ======================
-        // WHITE DAMAGE BAR
-        // ======================
-
-        GameObject damage = new GameObject("DamageFill");
-        damage.transform.SetParent(bg.transform);
-
-        Image damageImage = damage.AddComponent<Image>();
-        damageImage.sprite = healthBarSprite;
-        damageImage.type = Image.Type.Filled;
-        damageImage.fillMethod = Image.FillMethod.Horizontal;
-        damageImage.fillAmount = 1f;
-        damageImage.color = Color.white;
-
-        if (isPlayerOne)
-            damageImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-        else
-            damageImage.fillOrigin = (int)Image.OriginHorizontal.Right;
-
-        RectTransform damageRect = damage.GetComponent<RectTransform>();
-        damageRect.anchorMin = Vector2.zero;
-        damageRect.anchorMax = Vector2.one;
-        damageRect.offsetMin = Vector2.zero;
-        damageRect.offsetMax = Vector2.zero;
-
-        // ======================
-        // GREEN HEALTH BAR
-        // ======================
-
-        GameObject fill = new GameObject("Fill");
-        fill.transform.SetParent(bg.transform);
-
-        Image fillImage = fill.AddComponent<Image>();
-        fillImage.sprite = healthBarSprite;
-        fillImage.type = Image.Type.Filled;
-        fillImage.fillMethod = Image.FillMethod.Horizontal;
-        fillImage.fillAmount = 1f;
-        fillImage.color = Color.green;
-
-        if (isPlayerOne)
-            fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-        else
-            fillImage.fillOrigin = (int)Image.OriginHorizontal.Right;
-
-        RectTransform fillRect = fill.GetComponent<RectTransform>();
-        fillRect.anchorMin = Vector2.zero;
-        fillRect.anchorMax = Vector2.one;
-        fillRect.offsetMin = Vector2.zero;
-        fillRect.offsetMax = Vector2.zero;
-
-        damageSystem.greenBar = fillImage;
-        damageSystem.whiteBar = damageImage;
-
-        // ======================
-        // SPECIAL METER
-        // ======================
-
-        CreateSpecialMeter(container.transform, isPlayerOne);
-
-        return fillImage;
+        rect.anchorMin = new Vector2(1, 1);
+        rect.anchorMax = new Vector2(1, 1);
+        rect.anchoredPosition = new Vector2(-260, -60);
     }
+    else
+    {
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(260, -60);
+    }
+
+    container.AddComponent<HealthBarShake>();
+    HealthBarDamage damageSystem = container.AddComponent<HealthBarDamage>();
+
+    // ======================
+    // HEALTH BAR HOLDER
+    // ======================
+    GameObject barHolder = new GameObject("HealthBar");
+    barHolder.transform.SetParent(container.transform);
+
+    RectTransform holderRect = barHolder.AddComponent<RectTransform>();
+    holderRect.anchorMin = new Vector2(0, 1);
+    holderRect.anchorMax = new Vector2(1, 1);
+    holderRect.pivot = new Vector2(0.5f, 1);
+    holderRect.sizeDelta = new Vector2(0, 50);
+    holderRect.anchoredPosition = Vector2.zero;
+
+    // ======================
+    // BACKGROUND
+    // ======================
+    GameObject bg = new GameObject("BG");
+    bg.transform.SetParent(barHolder.transform);
+
+    Image bgImage = bg.AddComponent<Image>();
+    bgImage.sprite = healthBarSprite;
+    bgImage.type = Image.Type.Sliced;
+    bgImage.color = Color.black;
+
+    RectTransform bgRect = bg.GetComponent<RectTransform>();
+    bgRect.anchorMin = Vector2.zero;
+    bgRect.anchorMax = Vector2.one;
+    bgRect.offsetMin = Vector2.zero;
+    bgRect.offsetMax = Vector2.zero;
+
+    // ======================
+    // WHITE DAMAGE BAR
+    // ======================
+    GameObject damage = new GameObject("DamageFill");
+    damage.transform.SetParent(bg.transform);
+
+    Image damageImage = damage.AddComponent<Image>();
+    damageImage.sprite = healthBarSprite;
+    damageImage.type = Image.Type.Filled;
+    damageImage.fillMethod = Image.FillMethod.Horizontal;
+    damageImage.fillAmount = 1f;
+    damageImage.color = Color.white;
+
+    if (isPlayerOne)
+        damageImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+    else
+        damageImage.fillOrigin = (int)Image.OriginHorizontal.Right;
+
+    RectTransform damageRect = damage.GetComponent<RectTransform>();
+    damageRect.anchorMin = Vector2.zero;
+    damageRect.anchorMax = Vector2.one;
+    damageRect.offsetMin = Vector2.zero;
+    damageRect.offsetMax = Vector2.zero;
+
+    // ======================
+    // MAIN HEALTH BAR (CUSTOM FILL)
+    // ======================
+    GameObject fill = new GameObject("Fill");
+    fill.transform.SetParent(bg.transform);
+
+    Image fillImage = fill.AddComponent<Image>();
+
+    // Use your custom sprite for the health fill
+    fillImage.sprite = healthFillSprite != null ? healthFillSprite : healthBarSprite;
+
+    // ✅ Must be Filled for dynamic health animation
+    fillImage.type = Image.Type.Filled;
+    fillImage.fillMethod = Image.FillMethod.Horizontal;
+    fillImage.fillAmount = 1f;
+
+    if (isPlayerOne)
+        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+    else
+        fillImage.fillOrigin = (int)Image.OriginHorizontal.Right;
+
+    fillImage.color = Color.white; // keep white so sprite colors show properly
+
+    RectTransform fillRect = fill.GetComponent<RectTransform>();
+    fillRect.anchorMin = Vector2.zero;
+    fillRect.anchorMax = Vector2.one;
+    fillRect.offsetMin = Vector2.zero;
+    fillRect.offsetMax = Vector2.zero;
+
+    // ======================
+    // Assign to HealthBarDamage
+    // ======================
+    damageSystem.greenBar = fillImage;
+    damageSystem.whiteBar = damageImage;
+
+    // ======================
+    // SPECIAL METER
+    // ======================
+    CreateSpecialMeter(container.transform, isPlayerOne);
+
+    return fillImage;
+}
 
 void CreateSpecialMeter(Transform parent, bool isPlayerOne)
 {
