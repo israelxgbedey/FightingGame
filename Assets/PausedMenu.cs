@@ -12,34 +12,82 @@ public class PausedMenu : MonoBehaviour
     public GameObject quitConfirmPanel;
 
     [Header("Scene Names")]
-    public string mainMenuSceneName = "MainMenu";
+    public string mainMenuSceneName = "StartMenu";
     public string characterSelectSceneName = "CharacterSelect"; // Add this
 
-    void Update()
+
+void Start()
+{
+    string currentScene = SceneManager.GetActiveScene().name;
+
+    // Disable this script on menu scenes
+    if (currentScene == mainMenuSceneName ||
+        currentScene == characterSelectSceneName)
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (isPaused)
-                ResumeGame();
-            else
-                PauseGame();
-        }
+        enabled = false;
+        return;
     }
 
-    public void PauseGame()
+    Time.timeScale = 1f;
+    isPaused = false;
+}
+void Update()
+{
+    if (Input.GetKeyDown(KeyCode.Escape))
     {
-        if (pauseMenuPrefab != null && pauseMenuInstance == null)
-        {
-            // Instantiate the pause menu Canvas
-            pauseMenuInstance = Instantiate(pauseMenuPrefab);
-
-            // Automatically connect buttons
-            SetupButtons();
-        }
-
-        Time.timeScale = 0f;
-        isPaused = true;
+        if (isPaused)
+            ResumeGame();
+        else
+            PauseGame();
     }
+}
+
+bool CanPause()
+{
+    string currentScene = SceneManager.GetActiveScene().name;
+
+    return currentScene != mainMenuSceneName &&
+           currentScene != characterSelectSceneName;
+}
+void OnEnable()
+{
+    SceneManager.sceneLoaded += OnSceneLoaded;
+}
+
+void OnDisable()
+{
+    SceneManager.sceneLoaded -= OnSceneLoaded;
+}
+
+void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+{
+    bool isMenuScene =
+        scene.name == mainMenuSceneName ||
+        scene.name == characterSelectSceneName;
+
+    enabled = !isMenuScene;
+
+    if (isMenuScene)
+    {
+        ResumeGame();
+    }
+}
+
+public void PauseGame()
+{
+    if (!CanPause())
+        return;
+
+    if (pauseMenuPrefab != null && pauseMenuInstance == null)
+    {
+        pauseMenuInstance = Instantiate(pauseMenuPrefab);
+        SetupButtons();
+    }
+
+    Time.timeScale = 0f;
+    isPaused = true;
+}
+
 
     void SetupButtons()
     {

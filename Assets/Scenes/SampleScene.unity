@@ -4472,6 +4472,18 @@ PrefabInstance:
       propertyPath: specialBarSprite
       value: 
       objectReference: {fileID: -5653800541461615744, guid: a963e6a47c950453d9ad640600bc8f1d, type: 3}
+    - target: {fileID: 5577756730667351239, guid: 523847156aea44e728526cfa7f898069, type: 3}
+      propertyPath: StartMenu
+      value: StartMenu
+      objectReference: {fileID: 0}
+    - target: {fileID: 5577756730667351239, guid: 523847156aea44e728526cfa7f898069, type: 3}
+      propertyPath: mainMenuSceneName
+      value: StartMenu
+      objectReference: {fileID: 0}
+    - target: {fileID: 5577756730667351239, guid: 523847156aea44e728526cfa7f898069, type: 3}
+      propertyPath: characterSelectSceneName
+      value: StartMenu
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
